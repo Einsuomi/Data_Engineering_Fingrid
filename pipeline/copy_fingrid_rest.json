@@ -1,0 +1,386 @@
+{
+	"name": "copy_fingrid_rest",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set end time in findgrid api",
+				"description": "as current datetime",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "end_time",
+					"value": {
+						"value": "@formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss.fffZ')\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "update last refresh timestamp",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "copy data incrementally",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/ethan.nie2023@gmail.com/update last refresh timestamp/update last_timestamp",
+					"baseParameters": {
+						"end_time": {
+							"value": "@variables('end_time')",
+							"type": "Expression"
+						},
+						"dataset_source_id": {
+							"value": "@pipeline().parameters.source_dataset_id",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Set start_time",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "start_time",
+					"value": {
+						"value": "@pipeline().parameters.start_time",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set until_end_time",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set end time in findgrid api",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set start_time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "until_end_time",
+					"value": {
+						"value": "@if( \ngreater( \naddDays(variables('start_time'), int(pipeline().parameters.load_increment_days)), variables('end_time')\n        ),\n    variables('end_time'),\n    addDays(variables('start_time'), int(pipeline().parameters.load_increment_days))\n)\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set until_start_time",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set start_time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set end time in findgrid api",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "until_start_time",
+					"value": {
+						"value": "@variables('start_time')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "copy data incrementally",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "Set until_end_time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set until_start_time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(\n    formatDateTime(variables('until_start_time'), 'yyyy-MM-dd'),\n    formatDateTime(variables('end_time'), 'yyyy-MM-dd')\n)\n",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy from fingrid using rest api",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "hold current until_end_time",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"additionalHeaders": {
+										"x-api-key": {
+											"value": "8f918aee12eb40e896d4eb74267562fc",
+											"type": "Expression"
+										}
+									},
+									"paginationRules": {
+										"QueryParameters.page": "RANGE:1::1",
+										"EndCondition:$[0]": "Empty",
+										"MaxRequestNumber": "5"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_fingrid_restapi",
+									"type": "DatasetReference",
+									"parameters": {
+										"startTime": {
+											"value": "@variables('until_start_time')",
+											"type": "Expression"
+										},
+										"endTime": {
+											"value": "@variables('until_end_time')",
+											"type": "Expression"
+										},
+										"page_size": {
+											"value": "@pipeline().parameters.page_size",
+											"type": "Expression"
+										},
+										"source_dataset_id": {
+											"value": "@pipeline().parameters.source_dataset_id",
+											"type": "Expression"
+										},
+										"page": {
+											"value": "@variables('current_page')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_sink_dl",
+									"type": "DatasetReference",
+									"parameters": {
+										"target_container": {
+											"value": "@pipeline().parameters.target_container",
+											"type": "Expression"
+										},
+										"target_folder": {
+											"value": "@pipeline().parameters.target_folder",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Set until_start to until_end",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Copy from fingrid using rest api",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "until_start_time",
+								"value": {
+									"value": "@variables('until_end_time')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set until_end to until_end plus load_increment_days",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Set until_start to until_end",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "until_end_time",
+								"value": {
+									"value": "@addDays(variables('tem_time'), int(pipeline().parameters.load_increment_days))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "hold current until_end_time",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "tem_time",
+								"value": {
+									"value": "@variables('until_end_time')",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"source_dataset_id": {
+				"type": "string"
+			},
+			"start_time": {
+				"type": "string"
+			},
+			"target_container": {
+				"type": "string"
+			},
+			"target_folder": {
+				"type": "string"
+			},
+			"page_size": {
+				"type": "string"
+			},
+			"load_increment_days": {
+				"type": "int"
+			}
+		},
+		"variables": {
+			"total_page": {
+				"type": "Integer"
+			},
+			"file_name_array": {
+				"type": "Array"
+			},
+			"last_modified_time": {
+				"type": "String",
+				"defaultValue": "2025-01-01T00:00:00Z"
+			},
+			"last_modified_file_name": {
+				"type": "String"
+			},
+			"end_time": {
+				"type": "String"
+			},
+			"current_page": {
+				"type": "Integer",
+				"defaultValue": 1
+			},
+			"tem_page": {
+				"type": "Integer",
+				"defaultValue": 1
+			},
+			"start_time": {
+				"type": "String"
+			},
+			"until_start_time": {
+				"type": "String"
+			},
+			"until_end_time": {
+				"type": "String"
+			},
+			"tem_time": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-17T06:21:07Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
