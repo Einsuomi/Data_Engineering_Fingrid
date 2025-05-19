@@ -11,6 +11,9 @@ The architecture implements industry best practices, including:
 - **State management** through control tables
 - A **medallion data lakehouse pattern** that progressively improves data quality from raw ingestion to analytical-ready assets
 
+## Architecture
+![Project Architecture](image/architecture.png)
+
 ---
 
 ## Technical Solution
