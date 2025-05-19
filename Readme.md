@@ -24,7 +24,7 @@ This solution showcases modern data engineering best practices through the follo
 
 - **Parameterized Azure Data Factory pipelines** controlled through a centralized configuration table
 - Enables dynamic processing of new data sources and logic without code changes
-![Control Table](Images/control_table.png)
+![Control Table](Images/control table.png)
 
 ### Incremental Data Loading
 
