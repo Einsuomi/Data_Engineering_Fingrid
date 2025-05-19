@@ -24,12 +24,17 @@ This solution showcases modern data engineering best practices through the follo
 
 - **Parameterized Azure Data Factory pipelines** controlled through a centralized configuration table
 - Enables dynamic processing of new data sources and logic without code changes
+  
 ![Control Table](Images/control_table.jpg)
 
 ### Incremental Data Loading
 
 - Efficient data ingestion with **configurable batch sizes** and **state tracking**
 - Optimized for performance and resource utilization
+
+  ![pipeline](Images/pipeline1.jpg)
+
+  ![pipeline](Images/pipeline2.jpg)
 
 ### Medallion Architecture
 
