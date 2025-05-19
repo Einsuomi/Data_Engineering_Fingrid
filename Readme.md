@@ -12,7 +12,7 @@ The architecture implements industry best practices, including:
 - A **medallion data lakehouse pattern** that progressively improves data quality from raw ingestion to analytical-ready assets
 
 ## Architecture
-![Project Architecture](image/architecture.png)
+![Project Architecture](Images/Architecture.png)
 
 ---
 
