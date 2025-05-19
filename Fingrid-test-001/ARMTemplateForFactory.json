@@ -1,0 +1,1512 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Fingrid-test-001"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
+		},
+		"AzureDatabricksDeltaLake_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricksDeltaLake'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://fingridtest.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0514-162513-oug5jljw"
+		},
+		"RestService_fingrid_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://data.fingrid.fi/api/datasets/"
+		},
+		"ls_fingrid_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://data.fingrid.fi/api/datasets/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/copy_fingrid_http')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy from fingrid",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Set end time in findgrid api",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET",
+									"additionalHeaders": "x-api-key:8f918aee12eb40e896d4eb74267562fc",
+									"requestTimeout": ""
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_fingrid",
+								"type": "DatasetReference",
+								"parameters": {
+									"startTime": {
+										"value": "@pipeline().parameters.start_time",
+										"type": "Expression"
+									},
+									"endTime": {
+										"value": "@variables('end_time')",
+										"type": "Expression"
+									},
+									"pageSize": {
+										"value": "@pipeline().parameters.page_size",
+										"type": "Expression"
+									},
+									"source_dataset_id": {
+										"value": "@pipeline().parameters.source_dataset_id",
+										"type": "Expression"
+									},
+									"page": {
+										"value": "@variables('current_page')",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_sink_dl",
+								"type": "DatasetReference",
+								"parameters": {
+									"target_container": {
+										"value": "@pipeline().parameters.target_container",
+										"type": "Expression"
+									},
+									"target_folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Set total page in this run",
+						"description": "",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Lookup total page in this run",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "total_page",
+							"value": {
+								"value": "@activity('Lookup total page in this run').output.value[0].pagination.lastPage",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Lookup total page in this run",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "ForEach each file name",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "lookup_page_file_lastmodified",
+								"type": "DatasetReference",
+								"parameters": {
+									"target_container": {
+										"value": "@pipeline().parameters.target_container",
+										"type": "Expression"
+									},
+									"target_folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									},
+									"target_file": {
+										"value": "@variables('last_modified_file_name')",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Get all file names",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "Copy from fingrid",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "lookup_page_allfiles",
+								"type": "DatasetReference",
+								"parameters": {
+									"target_container": {
+										"value": "@pipeline().parameters.target_container",
+										"type": "Expression"
+									},
+									"target_folder": {
+										"value": "@pipeline().parameters.target_folder",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "JsonReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach each file name",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get all file names",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get all file names').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Get file lastModified",
+									"type": "GetMetadata",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "lookup_page_file_lastmodified",
+											"type": "DatasetReference",
+											"parameters": {
+												"target_container": {
+													"value": "@pipeline().parameters.target_container",
+													"type": "Expression"
+												},
+												"target_folder": {
+													"value": "@pipeline().parameters.target_folder",
+													"type": "Expression"
+												},
+												"target_file": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										},
+										"fieldList": [
+											"lastModified",
+											"itemName"
+										],
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										},
+										"formatSettings": {
+											"type": "JsonReadSettings"
+										}
+									}
+								},
+								{
+									"name": "If Condition store the last modified time and file",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "Get file lastModified",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greaterOrEquals(activity('Get file lastModified').output.lastModified, variables('last_modified_time'))",
+											"type": "Expression"
+										},
+										"ifTrueActivities": [
+											{
+												"name": "Set variable last modified time",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "last_modified_time",
+													"value": {
+														"value": "@activity('Get file lastModified').output.lastModified",
+														"type": "Expression"
+													}
+												}
+											},
+											{
+												"name": "Set variable last modified file name",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "Set variable last modified time",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "last_modified_file_name",
+													"value": {
+														"value": "@activity('Get file lastModified').output.itemName",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Until total page",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "Set total page in this run",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greaterOrEquals(variables('current_page'), variables('total_page'))",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy from fingrid_copy1",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set current_page",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "JsonSource",
+											"storeSettings": {
+												"type": "HttpReadSettings",
+												"requestMethod": "GET",
+												"additionalHeaders": "x-api-key:8f918aee12eb40e896d4eb74267562fc",
+												"requestTimeout": ""
+											},
+											"formatSettings": {
+												"type": "JsonReadSettings"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_fingrid",
+											"type": "DatasetReference",
+											"parameters": {
+												"startTime": {
+													"value": "@pipeline().parameters.start_time",
+													"type": "Expression"
+												},
+												"endTime": {
+													"value": "@variables('end_time')",
+													"type": "Expression"
+												},
+												"pageSize": {
+													"value": "@pipeline().parameters.page_size",
+													"type": "Expression"
+												},
+												"source_dataset_id": {
+													"value": "@pipeline().parameters.source_dataset_id",
+													"type": "Expression"
+												},
+												"page": {
+													"value": "@variables('current_page')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_sink_dl",
+											"type": "DatasetReference",
+											"parameters": {
+												"target_container": {
+													"value": "@pipeline().parameters.target_container",
+													"type": "Expression"
+												},
+												"target_folder": {
+													"value": "@pipeline().parameters.target_folder",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Set current_page",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Set tem_page",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "current_page",
+										"value": {
+											"value": "@variables('tem_page')",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Set tem_page",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "tem_page",
+										"value": {
+											"value": "@add(variables('current_page'),1)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					},
+					{
+						"name": "Set end time in findgrid api",
+						"description": "as current datetime",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "end_time",
+							"value": {
+								"value": "@formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss.fffZ')\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "update last refresh timestamp",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Until total page",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/ethan.nie2023@gmail.com/update last refresh timestamp/update last_timestamp",
+							"baseParameters": {
+								"end_time": {
+									"value": "@variables('end_time')",
+									"type": "Expression"
+								},
+								"dataset_source_id": {
+									"value": "@pipeline().parameters.source_dataset_id",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_dataset_id": {
+						"type": "string"
+					},
+					"start_time": {
+						"type": "string"
+					},
+					"target_container": {
+						"type": "string"
+					},
+					"target_folder": {
+						"type": "string"
+					},
+					"page_size": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"total_page": {
+						"type": "Integer"
+					},
+					"file_name_array": {
+						"type": "Array"
+					},
+					"last_modified_time": {
+						"type": "String",
+						"defaultValue": "2025-01-01T00:00:00Z"
+					},
+					"last_modified_file_name": {
+						"type": "String"
+					},
+					"end_time": {
+						"type": "String"
+					},
+					"current_page": {
+						"type": "Integer",
+						"defaultValue": 1
+					},
+					"tem_page": {
+						"type": "Integer",
+						"defaultValue": 1
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-17T06:21:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_fingrid')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sink_dl')]",
+				"[concat(variables('factoryId'), '/datasets/lookup_page_file_lastmodified')]",
+				"[concat(variables('factoryId'), '/datasets/lookup_page_allfiles')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDatabricks1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/copy_fingrid_rest')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set end time in findgrid api",
+						"description": "as current datetime",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "end_time",
+							"value": {
+								"value": "@formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss.fffZ')\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "update last refresh timestamp",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "copy data incrementally",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/ethan.nie2023@gmail.com/update last refresh timestamp/update last_timestamp",
+							"baseParameters": {
+								"end_time": {
+									"value": "@variables('end_time')",
+									"type": "Expression"
+								},
+								"dataset_source_id": {
+									"value": "@pipeline().parameters.source_dataset_id",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Set start_time",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "start_time",
+							"value": {
+								"value": "@pipeline().parameters.start_time",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set until_end_time",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set end time in findgrid api",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Set start_time",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "until_end_time",
+							"value": {
+								"value": "@if( \ngreater( \naddDays(variables('start_time'), int(pipeline().parameters.load_increment_days)), variables('end_time')\n        ),\n    variables('end_time'),\n    addDays(variables('start_time'), int(pipeline().parameters.load_increment_days))\n)\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set until_start_time",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set start_time",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Set end time in findgrid api",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "until_start_time",
+							"value": {
+								"value": "@variables('start_time')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "copy data incrementally",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "Set until_end_time",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Set until_start_time",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(\n    formatDateTime(variables('until_start_time'), 'yyyy-MM-dd'),\n    formatDateTime(variables('end_time'), 'yyyy-MM-dd')\n)\n",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy from fingrid using rest api",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "hold current until_end_time",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"x-api-key": {
+													"value": "8f918aee12eb40e896d4eb74267562fc",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"QueryParameters.page": "RANGE:1::1",
+												"EndCondition:$[0]": "Empty",
+												"MaxRequestNumber": "5"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_fingrid_restapi",
+											"type": "DatasetReference",
+											"parameters": {
+												"startTime": {
+													"value": "@variables('until_start_time')",
+													"type": "Expression"
+												},
+												"endTime": {
+													"value": "@variables('until_end_time')",
+													"type": "Expression"
+												},
+												"page_size": {
+													"value": "@pipeline().parameters.page_size",
+													"type": "Expression"
+												},
+												"source_dataset_id": {
+													"value": "@pipeline().parameters.source_dataset_id",
+													"type": "Expression"
+												},
+												"page": {
+													"value": "@variables('current_page')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_sink_dl",
+											"type": "DatasetReference",
+											"parameters": {
+												"target_container": {
+													"value": "@pipeline().parameters.target_container",
+													"type": "Expression"
+												},
+												"target_folder": {
+													"value": "@pipeline().parameters.target_folder",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Set until_start to until_end",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Copy from fingrid using rest api",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "until_start_time",
+										"value": {
+											"value": "@variables('until_end_time')",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Set until_end to until_end plus load_increment_days",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Set until_start to until_end",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "until_end_time",
+										"value": {
+											"value": "@addDays(variables('tem_time'), int(pipeline().parameters.load_increment_days))",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "hold current until_end_time",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "tem_time",
+										"value": {
+											"value": "@variables('until_end_time')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_dataset_id": {
+						"type": "string"
+					},
+					"start_time": {
+						"type": "string"
+					},
+					"target_container": {
+						"type": "string"
+					},
+					"target_folder": {
+						"type": "string"
+					},
+					"page_size": {
+						"type": "string"
+					},
+					"load_increment_days": {
+						"type": "int"
+					}
+				},
+				"variables": {
+					"total_page": {
+						"type": "Integer"
+					},
+					"file_name_array": {
+						"type": "Array"
+					},
+					"last_modified_time": {
+						"type": "String",
+						"defaultValue": "2025-01-01T00:00:00Z"
+					},
+					"last_modified_file_name": {
+						"type": "String"
+					},
+					"end_time": {
+						"type": "String"
+					},
+					"current_page": {
+						"type": "Integer",
+						"defaultValue": 1
+					},
+					"tem_page": {
+						"type": "Integer",
+						"defaultValue": 1
+					},
+					"start_time": {
+						"type": "String"
+					},
+					"until_start_time": {
+						"type": "String"
+					},
+					"until_end_time": {
+						"type": "String"
+					},
+					"tem_time": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-17T06:21:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDatabricks1')]",
+				"[concat(variables('factoryId'), '/datasets/ds_fingrid_restapi')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sink_dl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/get_load_parameter')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup Load Parameter",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDatabricksDeltaLakeSource",
+								"query": {
+									"value": "SELECT * FROM fingrid_test_workspace.fingrid_load_control.load_control WHERE source_system = '@{pipeline().parameters.source_system}'",
+									"type": "Expression"
+								}
+							},
+							"dataset": {
+								"referenceName": "load_control_table",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup Load Parameter",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup Load Parameter').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Execute test copy",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "copy_fingrid_http",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": false,
+										"parameters": {
+											"source_dataset_id": {
+												"value": "@item().source_dataset_id",
+												"type": "Expression"
+											},
+											"start_time": {
+												"value": "@formatDateTime(item().last_timestamp, 'yyyy-MM-ddTHH:mm:ss.fffZ')\n",
+												"type": "Expression"
+											},
+											"target_container": {
+												"value": "@item().target_container",
+												"type": "Expression"
+											},
+											"target_folder": {
+												"value": "@item().target_folder",
+												"type": "Expression"
+											},
+											"page_size": {
+												"value": "@item().page_size",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_system": {
+						"type": "string",
+						"defaultValue": "Fingrid"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-17T06:21:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/load_control_table')]",
+				"[concat(variables('factoryId'), '/pipelines/copy_fingrid_http')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_fingrid')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_fingrid",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"startTime": {
+						"type": "string"
+					},
+					"endTime": {
+						"type": "string"
+					},
+					"pageSize": {
+						"type": "string"
+					},
+					"source_dataset_id": {
+						"type": "string"
+					},
+					"page": {
+						"type": "string",
+						"defaultValue": "1"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@{dataset().source_dataset_id}/data?startTime=@{dataset().startTime}&endTime=@{dataset().endTime}&page=@{dataset().page}&pageSize=@{dataset().pageSize}&sortBy=startTime&sortOrder=asc",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_fingrid')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_fingrid_restapi')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "RestService_fingrid",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"startTime": {
+						"type": "string"
+					},
+					"endTime": {
+						"type": "string"
+					},
+					"page_size": {
+						"type": "string"
+					},
+					"source_dataset_id": {
+						"type": "string"
+					},
+					"page": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@{dataset().source_dataset_id}/data?startTime=@{dataset().startTime}&endTime=@{dataset().endTime}&page=@{dataset().page}&pageSize=@{dataset().page_size}&sortBy=startTime&sortOrder=asc",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/RestService_fingrid')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sink_dl')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"target_container": {
+						"type": "string"
+					},
+					"target_folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@{dataset().target_folder}_@{formatDateTime(convertTimeZone(utcNow(), 'UTC', 'FLE Standard Time'), 'yyyy-MM-dd_HH:mm:ss')}.json",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().target_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().target_container",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/load_control_table')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricksDeltaLake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLakeDataset",
+				"typeProperties": {
+					"database": "fingrid_load_control",
+					"table": "load_control"
+				},
+				"schema": [
+					{
+						"name": "id",
+						"type": "long"
+					},
+					{
+						"name": "source_system",
+						"type": "string"
+					},
+					{
+						"name": "source_dataset_id",
+						"type": "string"
+					},
+					{
+						"name": "source_dateset_name",
+						"type": "string"
+					},
+					{
+						"name": "last_timestamp",
+						"type": "timestamp"
+					},
+					{
+						"name": "refresh_timestamp",
+						"type": "timestamp"
+					},
+					{
+						"name": "target_container",
+						"type": "string"
+					},
+					{
+						"name": "target_folder",
+						"type": "string"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDatabricksDeltaLake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lookup_page_allfiles')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"target_container": {
+						"type": "string"
+					},
+					"target_folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "*.json",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().target_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().target_container",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lookup_page_file_lastmodified')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"target_container": {
+						"type": "string"
+					},
+					"target_folder": {
+						"type": "string"
+					},
+					"target_file": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().target_file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().target_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().target_container",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricks1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-2505495418077266.6.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"existingClusterId": "[parameters('AzureDatabricks1_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricksDeltaLake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLake",
+				"typeProperties": {
+					"domain": "https://adb-2505495418077266.6.azuredatabricks.net",
+					"clusterId": "0514-162513-oug5jljw",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricksDeltaLake_accessToken')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RestService_fingrid')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestService_fingrid_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_fingrid')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_fingrid_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
