@@ -66,7 +66,7 @@ This solution showcases modern data engineering best practices through the follo
 - Azure Data Lake Storage Gen2
 - Databricks (with Unity Catalog & Delta Lake)
 - Power BI
-- Python
+- Pyspark
 - Fingrid Open Data API
 
 ---
