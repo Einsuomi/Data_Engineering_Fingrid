@@ -1,0 +1,50 @@
+{
+	"name": "load_control_table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDatabricksDeltaLake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureDatabricksDeltaLakeDataset",
+		"typeProperties": {
+			"database": "fingrid_load_control",
+			"table": "load_control"
+		},
+		"schema": [
+			{
+				"name": "id",
+				"type": "long"
+			},
+			{
+				"name": "source_system",
+				"type": "string"
+			},
+			{
+				"name": "source_dataset_id",
+				"type": "string"
+			},
+			{
+				"name": "source_dateset_name",
+				"type": "string"
+			},
+			{
+				"name": "last_timestamp",
+				"type": "timestamp"
+			},
+			{
+				"name": "refresh_timestamp",
+				"type": "timestamp"
+			},
+			{
+				"name": "target_container",
+				"type": "string"
+			},
+			{
+				"name": "target_folder",
+				"type": "string"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

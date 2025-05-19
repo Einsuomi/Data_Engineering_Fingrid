@@ -1,0 +1,103 @@
+{
+	"name": "get_load_parameter",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup Load Parameter",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDatabricksDeltaLakeSource",
+						"query": {
+							"value": "SELECT * FROM fingrid_test_workspace.fingrid_load_control.load_control WHERE source_system = '@{pipeline().parameters.source_system}'",
+							"type": "Expression"
+						}
+					},
+					"dataset": {
+						"referenceName": "load_control_table",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup Load Parameter",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup Load Parameter').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute test copy",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "copy_fingrid_http",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"source_dataset_id": {
+										"value": "@item().source_dataset_id",
+										"type": "Expression"
+									},
+									"start_time": {
+										"value": "@formatDateTime(item().last_timestamp, 'yyyy-MM-ddTHH:mm:ss.fffZ')\n",
+										"type": "Expression"
+									},
+									"target_container": {
+										"value": "@item().target_container",
+										"type": "Expression"
+									},
+									"target_folder": {
+										"value": "@item().target_folder",
+										"type": "Expression"
+									},
+									"page_size": {
+										"value": "@item().page_size",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"source_system": {
+				"type": "string",
+				"defaultValue": "Fingrid"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-19T05:56:35Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

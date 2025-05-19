@@ -1,0 +1,38 @@
+{
+	"name": "ds_sink_dl",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"target_container": {
+				"type": "string"
+			},
+			"target_folder": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@{dataset().target_folder}_@{formatDateTime(convertTimeZone(utcNow(), 'UTC', 'FLE Standard Time'), 'yyyy-MM-dd_HH:mm:ss')}.json",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().target_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().target_container",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
