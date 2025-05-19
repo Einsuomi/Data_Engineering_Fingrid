@@ -1,9 +1,0 @@
-{
-	"name": "Fingrid-test-001",
-	"location": "westeurope",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "f93b9acb-872e-43c5-8cf5-dbfc0cd0f49a",
-		"tenantId": "787206b6-65e1-438f-bc69-8b33542186bb"
-	}
-}
