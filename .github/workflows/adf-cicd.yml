@@ -23,11 +23,11 @@ jobs:
         working-directory: ${{ github.workspace }}/build
 
       - name: Validate
-        run: npm run build validate ${{ github.workspace }}/ /subscriptions/<SUB_ID>/resourceGroups/<DEV_RG>/providers/Microsoft.DataFactory/factories/<DEV_ADF>
+        run: npm run build validate ${{ github.workspace }}/ /subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.DataFactory/factories/Fingrid-test-001
         working-directory: ${{ github.workspace }}/build
 
       - name: Generate ARM template
-        run: npm run build export ${{ github.workspace }}/ /subscriptions/<SUB_ID>/resourceGroups/<DEV_RG>/providers/Microsoft.DataFactory/factories/<DEV_ADF> ExportedArmTemplate
+        run: npm run build export ${{ github.workspace }}/ /subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.DataFactory/factories/Fingrid-test-001 ExportedArmTemplate
         working-directory: ${{ github.workspace }}/build
 
       - name: Upload artifact
