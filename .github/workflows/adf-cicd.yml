@@ -40,4 +40,4 @@ jobs:
           armTemplateFile: ./Fingrid-test-001/ARMTemplateForFactory.json
           armTemplateParametersFile: ./Fingrid-test-001/ARMTemplateParametersForFactory.json
           additionalParameters: |
-            -factoryName Fingrid-Prod
+            factoryName Fingrid-Prod
