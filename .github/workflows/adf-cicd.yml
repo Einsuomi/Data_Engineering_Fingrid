@@ -1,0 +1,61 @@
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: Install ADF Utilities package
+        run: npm install
+        working-directory: ${{ github.workspace }}/build
+
+      - name: Validate
+        run: npm run build validate ${{ github.workspace }}/ /subscriptions/<SUB_ID>/resourceGroups/<DEV_RG>/providers/Microsoft.DataFactory/factories/<DEV_ADF>
+        working-directory: ${{ github.workspace }}/build
+
+      - name: Generate ARM template
+        run: npm run build export ${{ github.workspace }}/ /subscriptions/<SUB_ID>/resourceGroups/<DEV_RG>/providers/Microsoft.DataFactory/factories/<DEV_ADF> ExportedArmTemplate
+        working-directory: ${{ github.workspace }}/build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExportedArmTemplate
+          path: ${{ github.workspace }}/build/ExportedArmTemplate
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ExportedArmTemplate
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to PROD
+        uses: Azure/data-factory-deploy-action@v1.2.0
+        with:
+          resourceGroupName: RG-Fingrid-Prod
+          dataFactoryName: Fingrid-Prod
+          armTemplateFile: ARMTemplateForFactory.json
+          armTemplateParametersFile: ARMTemplateParametersForFactory.json
