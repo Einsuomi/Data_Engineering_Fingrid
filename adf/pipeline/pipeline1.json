@@ -6,6 +6,23 @@
 				"name": "Wait1",
 				"description": "add to test the workflow in github",
 				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "Wait1_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 1
+				}
+			},
+			{
+				"name": "Wait1_copy1",
+				"description": "add to test the workflow in github",
+				"type": "Wait",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
