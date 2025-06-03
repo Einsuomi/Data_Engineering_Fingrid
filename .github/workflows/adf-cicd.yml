@@ -1,0 +1,38 @@
+name: ADF CI/CD Pipeline (adf_publish trigger)
+
+on:
+  push:
+    branches:
+      - adf_publish  # Trigger deployment when ARM templates are updated in adf_publish
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-to-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout adf_publish branch
+        uses: actions/checkout@v4
+        with:
+          ref: adf_publish  # Explicitly check out the adf_publish branch
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to PROD ADF
+        uses: Azure/data-factory-deploy-action@v1.2.0
+        with:
+          resourceGroupName: RG-Fingrid-Prod  # Replace with your PROD resource group
+          dataFactoryName: Fingrid-Prod       # Replace with your PROD ADF name
+          armTemplateFile: ./ARMTemplateForFactory.json
+          armTemplateParametersFile: ./ARMTemplateParametersForFactory.json
+          # Optional: Override parameters (e.g., connection strings)
+          additionalParameters: |
+            -factoryName Fingrid-Prod
+            -keyvault_prod_linkedService_properties_typeProperties_baseUrl "https://prod-keyvault.vault.azure.net/"
