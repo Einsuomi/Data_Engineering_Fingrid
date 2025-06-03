@@ -1,49 +1,22 @@
+name: ADF CI/CD Pipeline (adf_publish trigger)
+
 on:
   push:
     branches:
-      - main
+      - adf_publish  # Trigger deployment when ARM templates are updated in adf_publish
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  build:
+  deploy-to-prod:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+      - name: Checkout adf_publish branch
+        uses: actions/checkout@v4
         with:
-          node-version: 18.x
-
-      - name: Install ADF Utilities package
-        run: npm install
-        working-directory: ${{ github.workspace }}/build
-
-      - name: Validate
-        run: npm run build validate ${{ github.workspace }}/ /subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.DataFactory/factories/Fingrid-test-001
-        working-directory: ${{ github.workspace }}/build
-
-      - name: Generate ARM template
-        run: npm run build export ${{ github.workspace }}/ /subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.DataFactory/factories/Fingrid-test-001 ExportedArmTemplate
-        working-directory: ${{ github.workspace }}/build
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ExportedArmTemplate
-          path: ${{ github.workspace }}/build/ExportedArmTemplate
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ExportedArmTemplate
+          ref: adf_publish  # Explicitly check out the adf_publish branch
 
       - name: Azure Login
         uses: azure/login@v1
@@ -52,10 +25,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to PROD
+      - name: Deploy to PROD ADF
         uses: Azure/data-factory-deploy-action@v1.2.0
         with:
-          resourceGroupName: RG-Fingrid-Prod
-          dataFactoryName: Fingrid-Prod
-          armTemplateFile: ARMTemplateForFactory.json
-          armTemplateParametersFile: ARMTemplateParametersForFactory.json
+          resourceGroupName: RG-Fingrid-Prod  # Replace with your PROD resource group
+          dataFactoryName: Fingrid-Prod       # Replace with your PROD ADF name
+          armTemplateFile: ./ARMTemplateForFactory.json
+          armTemplateParametersFile: ./ARMTemplateParametersForFactory.json
+          # Optional: Override parameters (e.g., connection strings)
+          additionalParameters: |
+            -factoryName Fingrid-Prod
+            -keyvault_prod_linkedService_properties_typeProperties_baseUrl "https://prod-keyvault.vault.azure.net/"
