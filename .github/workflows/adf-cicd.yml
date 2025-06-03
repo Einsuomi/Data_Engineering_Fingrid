@@ -41,4 +41,3 @@ jobs:
           armTemplateParametersFile: ./Fingrid-test-001/ARMTemplateParametersForFactory.json
           additionalParameters: |
             -factoryName Fingrid-Prod
-            -keyvault_prod_linkedService_properties_typeProperties_baseUrl "https://prod-keyvault.vault.azure.net/"
