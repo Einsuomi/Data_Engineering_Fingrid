@@ -2,9 +2,9 @@
 	"name": "Fingrid-test-001",
 	"properties": {
 		"globalParameters": {
-			"Databrick_Workspace_URL": {
+			"catalog": {
 				"type": "string",
-				"value": "https://adb-2505495418077266.6.azuredatabricks.net"
+				"value": "fingrid_test_workspace"
 			},
 			"Databricks_Workspace_resource_ID": {
 				"type": "string",
