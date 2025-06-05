@@ -18,7 +18,7 @@
 					"source": {
 						"type": "AzureDatabricksDeltaLakeSource",
 						"query": {
-							"value": "SELECT * FROM fingrid_test_workspace.fingrid_load_control.load_control WHERE source_system = '@{pipeline().parameters.source_system}'",
+							"value": "SELECT * FROM @{pipeline().globalParameters.catalog}.@{pipeline().globalParameters.load_control_schema}.load_control WHERE source_system = '@{pipeline().parameters.source_system}'",
 							"type": "Expression"
 						}
 					},
@@ -32,6 +32,8 @@
 			{
 				"name": "ForEach1",
 				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Lookup Load Parameter",
