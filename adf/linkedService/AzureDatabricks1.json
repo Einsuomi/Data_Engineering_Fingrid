@@ -1,30 +1,12 @@
 {
 	"name": "AzureDatabricks1",
 	"properties": {
-		"parameters": {
-			"WorkSpaceURL": {
-				"type": "string",
-				"defaultValue": "https://adb-2505495418077266.6.azuredatabricks.net"
-			},
-			"subscriptions": {
-				"type": "string",
-				"defaultValue": "1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8"
-			},
-			"resourceGroups": {
-				"type": "string",
-				"defaultValue": "RG-Fingrid-test"
-			},
-			"WorkSpaceName": {
-				"type": "string",
-				"defaultValue": "fingrid_test_workspace"
-			}
-		},
 		"annotations": [],
 		"type": "AzureDatabricks",
 		"typeProperties": {
 			"domain": "https://adb-2505495418077266.6.azuredatabricks.net",
 			"authentication": "MSI",
-			"workspaceResourceId": "/subscriptions/@{linkedService().subscriptions}/resourceGroups/@{linkedService().resourceGroups}/providers/Microsoft.Databricks/workspaces/@{linkedService().WorkSpaceName}",
+			"workspaceResourceId": "/subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.Databricks/workspaces/fingrid_test_workspace",
 			"existingClusterId": "0514-162513-oug5jljw"
 		}
 	},
