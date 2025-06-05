@@ -1,5 +1,17 @@
 {
 	"name": "Fingrid-test-001",
+	"properties": {
+		"globalParameters": {
+			"Databrick_Workspace_URL": {
+				"type": "string",
+				"value": "https://adb-2505495418077266.6.azuredatabricks.net"
+			},
+			"Databricks_Workspace_resource_ID": {
+				"type": "string",
+				"value": "/subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.Databricks/workspaces/fingrid_test_workspace"
+			}
+		}
+	},
 	"location": "westeurope",
 	"identity": {
 		"type": "SystemAssigned",
