@@ -40,7 +40,7 @@ jobs:
         name: ExportedArmTemplate # (4) use the same artifact name you used in the previous export step
         path: ${{github.workspace}}/adf/build/ExportedArmTemplate
 
-  release:
+  deply_to_dev:
     needs: build
     runs-on: ubuntu-latest
     environment: DEV
