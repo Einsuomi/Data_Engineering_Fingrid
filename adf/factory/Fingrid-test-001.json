@@ -9,6 +9,10 @@
 			"load_control_schema": {
 				"type": "string",
 				"value": "fingrid_load_control"
+			},
+			"testP": {
+				"type": "string",
+				"value": "test"
 			}
 		}
 	},
