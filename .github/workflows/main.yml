@@ -71,7 +71,11 @@ jobs:
           additionalParameters: >
             AzureDataLakeStorage1_properties_typeProperties_url=${{ secrets.ADLSG2_URL}}
             AzureDatabricks1_properties_typeProperties_existingClusterId=${{ secrets.EXISTINGCLUSTERID}}
-
-
+            AzureDatabricks1_properties_typeProperties_domain=${{ secrets.DATABRICKS_DOMAIN}}
+            AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ secrets.DATABRICKS_WORKRESOUCEID}}
+            AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ secrets.DELTALAKE_DOMAIN}}
+            AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ secrets.DELTALAKE_WORKSPACERESOURCEID}}
+            default_properties_catalog_value=${{ secrets.CATALOG}}
+            default_properties_load_control_schema_value=${{ secrets.LOAD_CONTROL_SCHEMA}}
 
           # skipAzModuleInstallation:  # Parameters which skip the Az module installation. Optional, default is false.      
