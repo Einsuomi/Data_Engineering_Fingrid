@@ -6,9 +6,9 @@
 				"type": "string",
 				"value": "fingrid_test_workspace"
 			},
-			"Databricks_Workspace_resource_ID": {
+			"load_control_schema": {
 				"type": "string",
-				"value": "/subscriptions/1cf6ebb2-6c97-4ec4-9b7a-22a94a4dafc8/resourceGroups/RG-Fingrid-test/providers/Microsoft.Databricks/workspaces/fingrid_test_workspace"
+				"value": "fingrid_load_control"
 			}
 		}
 	},
