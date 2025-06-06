@@ -65,6 +65,7 @@ This solution showcases modern data engineering best practices through the follo
 - **Scalable and modular ETL pipelines**
 - **Automated, metadata-driven orchestration**
 - **Robust data quality and governance**
+- **CI/CD Deployment Pipeline**
 - **Actionable insights delivered to business users**
 
 ---
@@ -77,6 +78,7 @@ This solution showcases modern data engineering best practices through the follo
 - Power BI
 - Pyspark
 - Fingrid Open Data API
+- GitHub Workflows
 
 ---
 
