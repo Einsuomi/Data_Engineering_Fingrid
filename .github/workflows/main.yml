@@ -69,14 +69,14 @@ jobs:
           armTemplateFile: ARMTemplateForFactory.json
           armTemplateParametersFile: ARMTemplateParametersForFactory.json
           additionalParameters: >
-            AzureDataLakeStorage1_properties_typeProperties_url=${{ secrets.ADLSG2_URL}}
-            AzureDatabricks1_properties_typeProperties_existingClusterId=${{ secrets.EXISTINGCLUSTERID}}
-            AzureDatabricks1_properties_typeProperties_domain=${{ secrets.DATABRICKS_DOMAIN}}
-            AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ secrets.DATABRICKS_WORKRESOUCEID}}
-            AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ secrets.DELTALAKE_DOMAIN}}
-            AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ secrets.DELTALAKE_WORKSPACERESOURCEID}}
-            default_properties_catalog_value=${{ secrets.CATALOG}}
-            default_properties_load_control_schema_value=${{ secrets.LOAD_CONTROL_SCHEMA}}
+            AzureDataLakeStorage1_properties_typeProperties_url=${{ vars.ADLSG2_URL}}
+            AzureDatabricks1_properties_typeProperties_existingClusterId=${{ vars.EXISTINGCLUSTERID}}
+            AzureDatabricks1_properties_typeProperties_domain=${{ vars.DATABRICKS_DOMAIN}}
+            AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ vars.DATABRICKS_WORKRESOUCEID}}
+            AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ vars.DELTALAKE_DOMAIN}}
+            AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ vars.DELTALAKE_WORKSPACERESOURCEID}}
+            default_properties_catalog_value=${{ vars.CATALOG}}
+            default_properties_load_control_schema_value=${{ vars.LOAD_CONTROL_SCHEMA}}
 
 
   deploy_to_prod:
@@ -99,8 +99,8 @@ jobs:
       - name: Validate parameters
         run: |
           echo "Checking secret existence:"
-          echo "ADLS URL: ${{ secrets.ADLSG2_URL_PROD != '' }}"
-          echo "Cluster ID: ${{ secrets.EXISTINGCLUSTERID_PROD != '' }}"
+          echo "ADLS URL: ${{ vars.ADLSG2_URL_PROD != '' }}"
+          echo "Cluster ID: ${{ vars.EXISTINGCLUSTERID_PROD != '' }}"
 
   
       - name: data-factory-deploy
@@ -111,14 +111,14 @@ jobs:
           armTemplateFile: ARMTemplateForFactory.json
           armTemplateParametersFile: ARMTemplateParametersForFactory.json
           additionalParameters: >
-            AzureDataLakeStorage1_properties_typeProperties_url="testvalue"
-            AzureDatabricks1_properties_typeProperties_existingClusterId=${{ secrets.EXISTINGCLUSTERID_PROD }}
-            AzureDatabricks1_properties_typeProperties_domain=${{ secrets.DATABRICKS_DOMAIN_PROD }}
-            AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ secrets.DATABRICKS_WORKRESOUCEID_PROD }}
-            AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ secrets.DELTALAKE_DOMAIN_PROD }}
-            AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ secrets.DELTALAKE_WORKSPACERESOURCEID_PROD }}
-            default_properties_catalog_value=${{ secrets.CATALOG_PROD }}
-            default_properties_load_control_schema_value="testvalue111"
+            AzureDataLakeStorage1_properties_typeProperties_url=${{ vars.ADLSG2_URL_PROD }}
+            AzureDatabricks1_properties_typeProperties_existingClusterId=${{ vars.EXISTINGCLUSTERID_PROD }}
+            AzureDatabricks1_properties_typeProperties_domain=${{ vars.DATABRICKS_DOMAIN_PROD }}
+            AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ vars.DATABRICKS_WORKRESOUCEID_PROD }}
+            AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ vars.DELTALAKE_DOMAIN_PROD }}
+            AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ vars.DELTALAKE_WORKSPACERESOURCEID_PROD }}
+            default_properties_catalog_value=${{ vars.CATALOG_PROD }}
+            default_properties_load_control_schema_value=${{ vars.LOAD_CONTROL_SCHEMA_PROD }}
   
 
           # skipAzModuleInstallation:  # Parameters which skip the Az module installation. Optional, default is false.      
