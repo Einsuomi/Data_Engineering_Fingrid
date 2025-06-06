@@ -105,7 +105,7 @@ jobs:
           armTemplateFile: ARMTemplateForFactory.json
           armTemplateParametersFile: ARMTemplateParametersForFactory.json
           additionalParameters: >
-            AzureDataLakeStorage1_properties_typeProperties_url=${{ secrets.ADLSG2_URL_PROD }}
+            AzureDataLakeStorage1_properties_typeProperties_url= "testvalue" # ${{ secrets.ADLSG2_URL_PROD }}
             AzureDatabricks1_properties_typeProperties_existingClusterId=${{ secrets.EXISTINGCLUSTERID_PROD }}
             AzureDatabricks1_properties_typeProperties_domain=${{ secrets.DATABRICKS_DOMAIN_PROD }}
             AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ secrets.DATABRICKS_WORKRESOUCEID_PROD }}
