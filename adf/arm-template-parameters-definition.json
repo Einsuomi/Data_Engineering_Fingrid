@@ -120,7 +120,8 @@
                     "hostKeyFingerprint": "=",
                     "mlWorkspaceName": "=",
                     "domain": "=",
-                    "workspaceResourceId": "="
+                    "workspaceResourceId": "=",
+                    "clusterId": "="
                 }
             }
         },
