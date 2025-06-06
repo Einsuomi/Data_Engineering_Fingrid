@@ -14,6 +14,9 @@ The architecture implements industry best practices, including:
 ## Architecture
 ![Project Architecture](Images/Architecture.png)
 
+## CI/CD Deployment Pipeline 
+![CI/CD Deployment Pipelinee](Images/Architecture.png)
+
 ---
 
 ## Technical Solution
