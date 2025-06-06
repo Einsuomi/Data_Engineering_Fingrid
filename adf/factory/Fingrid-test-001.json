@@ -13,10 +13,6 @@
 			"testP": {
 				"type": "string",
 				"value": "test"
-			},
-			"test2": {
-				"type": "string",
-				"value": "ttt"
 			}
 		}
 	},
