@@ -73,7 +73,7 @@ jobs:
             AzureDatabricks1_properties_typeProperties_existingClusterId=${{ vars.EXISTINGCLUSTERID}}
             AzureDatabricks1_properties_typeProperties_domain=${{ vars.DATABRICKS_DOMAIN}}
             AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ vars.DATABRICKS_WORKRESOUCEID}}
-            AzureDatabricksDeltaLake_properties_typeProperties_ClusterId=${{ vars.EXISTINGCLUSTERID}}
+            AzureDatabricksDeltaLake_properties_typeProperties_clusterId=${{ vars.EXISTINGCLUSTERID}}
             AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ vars.DELTALAKE_DOMAIN}}
             AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ vars.DELTALAKE_WORKSPACERESOURCEID}}
             default_properties_catalog_value=${{ vars.CATALOG}}
@@ -117,7 +117,7 @@ jobs:
             AzureDatabricks1_properties_typeProperties_domain=${{ vars.DATABRICKS_DOMAIN_PROD }}
             AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ vars.DATABRICKS_WORKRESOUCEID_PROD }}
             AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ vars.DELTALAKE_DOMAIN_PROD }}
-            AzureDatabricksDeltaLake_properties_typeProperties_ClusterId=${{ vars.EXISTINGCLUSTERID_PROD}}
+            AzureDatabricksDeltaLake_properties_typeProperties_clusterId=${{ vars.EXISTINGCLUSTERID_PROD}}
             AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ vars.DELTALAKE_WORKSPACERESOURCEID_PROD }}
             default_properties_catalog_value=${{ vars.CATALOG_PROD }}
             default_properties_load_control_schema_value=${{ vars.LOAD_CONTROL_SCHEMA_PROD }}
