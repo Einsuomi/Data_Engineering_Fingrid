@@ -96,6 +96,12 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
+      - name: Validate parameters
+        run: |
+          echo "Checking secret existence:"
+          echo "ADLS URL: ${{ secrets.ADLSG2_URL_PROD != '' }}"
+          echo "Cluster ID: ${{ secrets.EXISTINGCLUSTERID_PROD != '' }}"
+
   
       - name: data-factory-deploy
         uses: Azure/data-factory-deploy-action@v1.2.0
@@ -105,14 +111,14 @@ jobs:
           armTemplateFile: ARMTemplateForFactory.json
           armTemplateParametersFile: ARMTemplateParametersForFactory.json
           additionalParameters: >
-            AzureDataLakeStorage1_properties_typeProperties_url="testvalue" # ${{ secrets.ADLSG2_URL_PROD }}
+            AzureDataLakeStorage1_properties_typeProperties_url="testvalue"
             AzureDatabricks1_properties_typeProperties_existingClusterId=${{ secrets.EXISTINGCLUSTERID_PROD }}
             AzureDatabricks1_properties_typeProperties_domain=${{ secrets.DATABRICKS_DOMAIN_PROD }}
             AzureDatabricks1_properties_typeProperties_workspaceResourceId=${{ secrets.DATABRICKS_WORKRESOUCEID_PROD }}
             AzureDatabricksDeltaLake_properties_typeProperties_domain=${{ secrets.DELTALAKE_DOMAIN_PROD }}
             AzureDatabricksDeltaLake_properties_typeProperties_workspaceResourceId=${{ secrets.DELTALAKE_WORKSPACERESOURCEID_PROD }}
             default_properties_catalog_value=${{ secrets.CATALOG_PROD }}
-            default_properties_load_control_schema_value="testvalue111" # ${{ secrets.LOAD_CONTROL_SCHEMA_PROD }}
+            default_properties_load_control_schema_value="testvalue111"
   
 
           # skipAzModuleInstallation:  # Parameters which skip the Az module installation. Optional, default is false.      
