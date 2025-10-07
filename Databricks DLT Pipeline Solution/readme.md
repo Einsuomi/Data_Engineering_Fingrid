@@ -14,7 +14,7 @@ The pipeline is structured into three main layers, with an intermediate view lay
 
 ### 1. Bronze Layer
 Raw data is ingested from the source systems into the Bronze layer with minimal transformations.
-*   **Source:** JSON files from an S3 landing zone (`s3a://wartsila-datalake-{environment}-landing/fingrid/`).
+*   **Source:** JSON files from an landing zone.
 *   **Process:** The pipeline uses Auto Loader (`cloudFiles`) to read streaming data from S3.
 *   **Tables:** A separate raw bronze table is dynamically created for each dataset specified in the pipeline configuration. These tables include metadata columns like `source_file` and `ingestion_timestamp`.
 *   **Quality:** Basic data quality expectations are enforced, such as ensuring `startTime` and `endTime` are not null.
