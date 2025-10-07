@@ -1,1 +1,1 @@
-
+Declarative ETL with Delta Live Tables: Data processing is orchestrated with Databricks Delta Live Tables (DLT). This declarative framework is used to build reliable, maintainable, and testable data processing workflows with built-in data quality management, incremental loading, schema evolution, and automated error handling.
