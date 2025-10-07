@@ -4,7 +4,7 @@
 
 This project contains a Delta Live Tables (DLT) pipeline designed to process energy data, including electricity consumption and power generation forecasts. The pipeline follows a medallion architecture (Bronze, Silver, Gold) to incrementally cleanse, transform, and model the data for business intelligence and analytics purposes.
 
-The pipeline is dynamic and metadata-driven, capable of ingesting multiple datasets from an S3 landing zone, applying specific transformations based on dataset identifiers, and creating curated fact tables in the Gold layer.
+The pipeline is dynamic and metadata-driven, capable of ingesting multiple datasets from an landing zone, applying specific transformations based on dataset identifiers, and creating curated fact tables in the Gold layer.
 
 ## Pipeline Architecture
 
