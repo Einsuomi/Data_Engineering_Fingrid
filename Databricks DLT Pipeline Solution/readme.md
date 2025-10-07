@@ -10,7 +10,7 @@ The pipeline is dynamic and metadata-driven, capable of ingesting multiple datas
 
 The pipeline is structured into three main layers, with an intermediate view layer to stage transformations before creating the final Gold tables.
 
-![](https://i.imgur.com/your-image-url.png) <!--- Placeholder for your DLT graph image -->
+![DLT Pipeline Architecture](Images/dlt pipeline.jpg)
 
 ### 1. Bronze Layer
 Raw data is ingested from the source systems into the Bronze layer with minimal transformations.
